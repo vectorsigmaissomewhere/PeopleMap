@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from accounts.views import UserRegistrationView, UserLoginView,UserChangePasswordView, SendPasswordResetEmailView, UserPasswordResetView, VerifyEmailView
+from accounts.views import UserRegistrationView, UserLoginView,UserChangePasswordView, SendPasswordResetEmailView, UserPasswordResetView, VerifyEmailView, CheckAuthView, LogoutView
 
 urlpatterns = [
     path('register/',UserRegistrationView.as_view(), name='register'),
@@ -9,4 +9,6 @@ urlpatterns = [
     path('send-reset-password-email/', SendPasswordResetEmailView.as_view(), name='send-reset-password-email'),
     path('reset-password/<uid>/<token>/', UserPasswordResetView.as_view(), name='reset-password'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
+    path('check-auth/', CheckAuthView.as_view(), name='check-auth'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 ]

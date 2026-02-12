@@ -1,63 +1,75 @@
 import { Routes, Route } from "react-router-dom";
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import AuthLayout from "./components/auth/layout";
 import AuthLogin from "./pages/auth/login";
 import AuthRegister from "./pages/auth/register";
 import EmailVerificationPage from "./pages/auth/emailverification";
-
 import PeopleHome from "./pages/people-view/home";
 import PeopleLayout from "./components/people-view/layout";
-
 import { Skeleton } from "@/components/ui/skeleton"
-
 import NotFound from "./pages/not-found/index";
 import CheckAuth from "./components/common/check-auth";
 import UnauthPage from "./pages/unauth-page/index";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { checkAuth } from "./store/auth-slice";
-
+import { checkAuth, setLoading } from "./store/auth-slice";
 import axios from 'axios';
 
-
 function App() {
-  const {user, isAuthenticated, isLoading} = useSelector(state=>state.auth);
+  const { isAuthenticated, isLoading } = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
-  // Restore auth state from localStorage on app load
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (token) {
-      // Set default Authorization header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      dispatch(checkAuth());
-    } else {
-      // Still need to set loading to false if no token
-      dispatch({ type: 'auth/checkAuth/rejected' });
-    }
+    
+    const verifyAuth = async () => {
+      if (token) {
+        try {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+          );
+          
+          await Promise.race([
+            dispatch(checkAuth()).unwrap(),
+            timeoutPromise
+          ]);
+        } catch (error) {
+          console.log('Auth verification failed:', error);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          delete axios.defaults.headers.common['Authorization'];
+          dispatch(setLoading(false));
+        }
+      } else {
+        // No token, immediately set loading to false
+        dispatch(setLoading(false));
+      }
+    };
+
+    verifyAuth();
   }, [dispatch]);
-  if(isLoading) return  <Skeleton className="w-[800] bg-black h-[600px] w-[600px]" />
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Skeleton className="w-[800px] h-[600px]" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col overflow-hidden bg-white">
-      {/* common component 
-      <h1>Header component</h1>
-      */}
       <Routes>
-      <Route
+        <Route
           path="/"
           element={
-            <CheckAuth
-              isAuthenticated={isAuthenticated}
-              user={user}
-            ></CheckAuth>
+            <CheckAuth isAuthenticated={isAuthenticated} />
           }
         />
         <Route path="/auth" element={
-          <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={isAuthenticated}>
             <AuthLayout />
           </CheckAuth>
         }>
@@ -65,10 +77,8 @@ function App() {
           <Route path="register" element={<AuthRegister />} />
           <Route path="verify-email" element={<EmailVerificationPage />} />
         </Route>
-
-        {/*people related routes */}
         <Route path="/people" element={
-          <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={isAuthenticated}>
             <PeopleLayout/>
           </CheckAuth>
         }>

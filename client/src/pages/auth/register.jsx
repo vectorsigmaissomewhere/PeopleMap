@@ -3,7 +3,7 @@ import {useState} from "react"
 import CommonForm from "../../components/common/form";
 import { registerFormControls } from "../../config/index";
 import { useDispatch } from "react-redux";
-import { registerUser } from "@/store/auth-slice";
+import { registerUser, setEmail } from "@/store/auth-slice";
 import { toast } from 'sonner';
 
 const initialState = {
@@ -20,9 +20,10 @@ function AuthRegister(){
         event.preventDefault();
         dispatch(registerUser(formData)).then((data)=>{
             console.log(data);
-            if(data?.payload?.success) {
+            if(data?.payload?.data?.msg === 'Registration Successful') {
+                dispatch(setEmail(formData.email));
                 toast.success(data.payload.message);
-                navigate('/auth/login')
+                navigate('/auth/verify-email/');
             }{
                toast.error(data.payload.message); 
             }

@@ -144,6 +144,8 @@ class UserPasswordResetView(APIView):
 
 class VerifyEmailView(APIView):
     renderer_classes = [UserRenderer]
+    permission_classes = [] 
+    authentication_classes = []
     
     def post(self, request, format=None):
         serializer = VerifyEmailSerializer(data=request.data)
@@ -168,7 +170,8 @@ class VerifyEmailView(APIView):
 
 class ResendVerificationEmailView(APIView):
     renderer_classes = [UserRenderer]
-    
+    permission_classes = [AllowAny]
+
     def post(self, request, format=None):
         serializer = ResendVerificationEmailSerializer(data=request.data)
         

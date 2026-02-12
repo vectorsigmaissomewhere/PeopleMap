@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 
-function PeopleHome(){
+function Dashboard(){
     const { user } = useSelector((state) => state.auth);
     
     return(
@@ -22,4 +22,4 @@ function PeopleHome(){
     )
 }
 
-export default PeopleHome;
+export default Dashboard;

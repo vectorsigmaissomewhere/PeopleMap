@@ -4,7 +4,13 @@ import AuthLayout from "./components/auth/layout";
 import AuthLogin from "./pages/auth/login";
 import AuthRegister from "./pages/auth/register";
 import EmailVerificationPage from "./pages/auth/emailverification";
-import PeopleHome from "./pages/people-view/home";
+import Dashboard from "./pages/people-view/dashboard";
+import PeopleList from "./pages/people-view/peoplelist";
+import AddPerson from "./pages/people-view/addperson";
+import GroupsAndTags from "./pages/people-view/groupsandtags";
+import Analytics from "./pages/people-view/analytics";
+import Settings from "./pages/people-view/settings";
+
 import PeopleLayout from "./components/people-view/layout";
 import ForgetPassword from "./pages/auth/forgetpassword";
 import ResetPassword from "./pages/auth/reset-password"
@@ -17,6 +23,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { checkAuth, setLoading } from "./store/auth-slice";
 import axios from 'axios';
+
 
 
 function App() {
@@ -88,7 +95,12 @@ function App() {
             <PeopleLayout/>
           </CheckAuth>
         }>
-          <Route path="home" element={<PeopleHome />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="list" element={<PeopleList />} />
+          <Route path="add" element={<AddPerson />} />
+          <Route path="groups" element={<GroupsAndTags />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/unauth-page" element={<UnauthPage/>}/>
         <Route path="*" element={<NotFound />} />

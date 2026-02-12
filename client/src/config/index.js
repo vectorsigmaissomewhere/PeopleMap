@@ -55,3 +55,37 @@ export const loginFormControls = [
         type: 'password'
     }
 ];
+
+
+export const PoepleViewHeaderMenuItems = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    path: "/people/dashboard",
+  },
+  {
+    id: "people",
+    label: "People",
+    path: "/people/list",
+  },
+  {
+    id: "addperson",
+    label: "Add Person",
+    path: "/people/add",
+  },
+  {
+    id: "groups&tags",
+    label: "Groups & Tags",
+    path: "/people/groups",
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    path: "/people/analytics",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    path: "/poeple/settings",
+  },
+];

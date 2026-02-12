@@ -21,7 +21,7 @@ function AuthLogin(){
         dispatch(loginUser(formData)).then((data) => {
             if (data?.payload?.verified) {
                 toast.success(data?.payload?.msg);
-                navigate('/people/home');
+                navigate('/people/dashboard');
             } else if (data?.payload?.verified === false) {
                 // Email not verified
                 dispatch(setEmail(data?.payload?.email));

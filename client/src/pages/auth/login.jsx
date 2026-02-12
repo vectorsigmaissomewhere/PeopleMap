@@ -32,6 +32,13 @@ function AuthLogin(){
             }
         });
     }
+    function handleForgetPassword(){
+        navigate('/auth/forget-password');
+    }
+
+    function handleVerifyAccount(){
+        navigate('/auth/verify-email')
+    }
     
     return (
         <div className="mx-auto w-full max-w-md space-y-6">
@@ -47,6 +54,23 @@ function AuthLogin(){
             setFormData={setFormData}
             onSubmit={onSubmit}
             />
+            <div className="text-center">
+                <button 
+                    onClick={handleForgetPassword}
+                    className="text-sm text-primary hover:underline focus:outline-none"
+                >
+                    Forgot Password?
+                </button>
+            </div>
+
+            <div className="text-center">
+                <button 
+                    onClick={handleVerifyAccount}
+                    className="text-sm text-primary hover:underline focus:outline-none"
+                >
+                    Verify Account
+                </button>
+            </div>
         </div>
     );
 }

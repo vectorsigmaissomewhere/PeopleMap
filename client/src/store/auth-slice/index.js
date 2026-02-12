@@ -78,7 +78,8 @@ export const sendVerificationEmail = createAsyncThunk(
         formData,
         {
           headers: {
-            'Authorization': null
+            'Authorization': null,
+            'Content-Type': 'application/json',
           }
         }
       );

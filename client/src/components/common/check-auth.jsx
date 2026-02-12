@@ -7,7 +7,9 @@ function CheckAuth({ isAuthenticated, children }) {
   const isAuthPage =
     path.includes("/auth/login") || 
     path.includes("/auth/register") ||
-    path.includes("/verify-email"); 
+    path.includes("/verify-email") ||
+    path.includes("/forget-password")||
+    path.includes("/reset-password"); 
 
   if (path === "/") {
     return isAuthenticated

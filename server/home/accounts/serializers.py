@@ -120,69 +120,52 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
     
     def validate(self, attrs):
         email = attrs.get('email')
+        
         # Check if the email exists in the User model
         if not User.objects.filter(email=email).exists():
             raise serializers.ValidationError("You are not a registered user.")
         
-        if User.objects.filter(email=email).exists():
-            user = User.objects.get(email=email)
-            
-            # Generate the encoded user ID and password reset token
-            uid = urlsafe_base64_encode(force_bytes(user.id))  # Encodes the user ID
-            token = PasswordResetTokenGenerator().make_token(user)  # Generates a reset token
-            
-            # Generate the reset password link
-            link = f'http://localhost:8000/api/user/reset-password/{uid}/{token}'
-            
-            # Preparing the email content
-            subject = "Reset Password Link"
-            message = link
-            from_email = settings.EMAIL_HOST_USER  # Email from settings
-            to_email = 'anishbroo501625@gmail.com'  # Sending the email to the user
-
-            try:
-                # Create and send the email
-                email = EmailMessage(
-                    subject,
-                    message,
-                    from_email,
-                    [to_email],  # Send to user's email
-                )
-                email.send(fail_silently=False)
-            except BadHeaderError:
-                return HttpResponse("Invalid header found.")
-            
-            return HttpResponse("Password reset email sent successfully.")
-        
-        else:
-            raise serializers.ValidationError("You are not a registered user.")
+        # Store user in context for use in view
+        user = User.objects.get(email=email)
+        self.context['user'] = user
         
         return attrs
     
-# Creating serializer for UserPasswordResetSerializer
 class UserPasswordResetSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
     password2 = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
-    class Meta:
-        fields = ['password','password2']
     
-    def validate(self,attrs):
+    class Meta:
+        fields = ['password', 'password2']
+    
+    def validate(self, attrs):
         try:
             password = attrs.get('password')
             password2 = attrs.get('password2')
             uid = self.context.get('uid')
             token = self.context.get('token')
+            
             if password != password2:
-                raise serializers.ValidationError("Password and Confirm Password doesn't match")
-            id = smart_str(urlsafe_base64_decode(uid)) # smart_str converts into string
+                raise serializers.ValidationError({"password": "Password and Confirm Password don't match"})
+            
+            if len(password) < 8:
+                raise serializers.ValidationError({"password": "Password must be at least 8 characters long"})
+            
+            id = smart_str(urlsafe_base64_decode(uid))
             user = User.objects.get(id=id)
+            
             if not PasswordResetTokenGenerator().check_token(user, token):
-                raise ValidationError('Token is not Valid or Expired')
+                raise ValidationError({'token': 'Token is not valid or has expired'})
+            
             user.set_password(password)
             user.save()
+            
             return attrs
-        except DjangoUnicodeDecodeError as identifier:
-            raise ValidationError('Token is not Valid or Expired')
+            
+        except DjangoUnicodeDecodeError:
+            raise ValidationError({'token': 'Token is not valid or has expired'})
+        except User.DoesNotExist:
+            raise ValidationError({'uid': 'User not found'})
         
 
 class VerifyEmailSerializer(serializers.Serializer):

@@ -98,23 +98,39 @@ class UserChangePasswordView(APIView):
 # send email to user for password change
 class SendPasswordResetEmailView(APIView):
     renderer_classes = [UserRenderer]
-    
+    permission_classes = [] 
+    authentication_classes = []
+
     def post(self, request, format=None):
-        serializer = SendPasswordResetEmailSerializer(data=request.data)
+        serializer = SendPasswordResetEmailSerializer(data=request.data, context={'request': request})
+        
         if serializer.is_valid(raise_exception=True):
-            email = serializer.validated_data['email']
+            email = serializer.validated_data.get('email')
             user = User.objects.get(email=email)
             
             # Generate the encoded user ID and password reset token
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
             
-            # Generate the reset password link
-            link = f'http://localhost:8000/api/user/reset-password/{uid}/{token}'
+            # Generate the reset password link - USE FRONTEND URL, NOT BACKEND
+            link = f'http://localhost:5173/auth/reset-password/{uid}/{token}/'
             
             # Send email
-            subject = "Reset Password Link"
-            message = link
+            subject = "Reset Your Password - Family Tree"
+            message = f"""
+Hello {user.name},
+
+You requested to reset your password. Click the link below to reset it:
+
+{link}
+
+If you didn't request this, please ignore this email.
+
+This link will expire in 24 hours.
+
+Thanks,
+Family Tree Team
+"""
             from_email = settings.EMAIL_HOST_USER
             to_email = email
             
@@ -126,10 +142,23 @@ class SendPasswordResetEmailView(APIView):
                     [to_email],
                 )
                 email_msg.send(fail_silently=False)
+                
+                return Response({
+                    'msg': 'Password reset link has been sent to your email.',
+                    'success': True
+                }, status=status.HTTP_200_OK)
+                
             except BadHeaderError:
-                return Response({'msg': 'Email sending failed'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            return Response({'msg':'Password Reset link sent. Please check your Email'}, status=status.HTTP_200_OK)
+                return Response({
+                    'msg': 'Email sending failed',
+                    'success': False
+                }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                print(f"Email error: {e}")
+                return Response({
+                    'msg': 'Failed to send email. Please try again.',
+                    'success': False
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

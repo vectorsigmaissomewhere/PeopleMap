@@ -6,6 +6,9 @@ import AuthRegister from "./pages/auth/register";
 import EmailVerificationPage from "./pages/auth/emailverification";
 import PeopleHome from "./pages/people-view/home";
 import PeopleLayout from "./components/people-view/layout";
+import ForgetPassword from "./pages/auth/forgetpassword";
+import ResetPassword from "./pages/auth/reset-password"
+
 import { Skeleton } from "@/components/ui/skeleton"
 import NotFound from "./pages/not-found/index";
 import CheckAuth from "./components/common/check-auth";
@@ -14,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { checkAuth, setLoading } from "./store/auth-slice";
 import axios from 'axios';
+
 
 function App() {
   const { isAuthenticated, isLoading } = useSelector(state => state.auth);
@@ -76,6 +80,8 @@ function App() {
           <Route path="login" element={<AuthLogin />} />
           <Route path="register" element={<AuthRegister />} />
           <Route path="verify-email" element={<EmailVerificationPage />} />
+          <Route path="forget-password" element={<ForgetPassword/>}/>
+          <Route path="reset-password/:uid/:token" element={<ResetPassword />} />
         </Route>
         <Route path="/people" element={
           <CheckAuth isAuthenticated={isAuthenticated}>

@@ -4,6 +4,9 @@ from .models import Tags
 class TagsSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Tags 
-        fields = '__all__'
-        many = True 
-        
+        fields = ['tags_id', 'name', 'colorname', 'created_at', 'updated_at', 'user']
+        read_only_fields = ['tags_id', 'created_at', 'updated_at', 'user']  
+    
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return Tags.objects.create(user=user, **validated_data)

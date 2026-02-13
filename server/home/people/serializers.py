@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from .models import Tags 
+from .models import Tags, People
 
 class TagsSerializer(serializers.ModelSerializer):
     class Meta: 
@@ -10,3 +10,9 @@ class TagsSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         return Tags.objects.create(user=user, **validated_data)
+    
+class PeopleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = People
+        fields = '__all__'
+        many = True 

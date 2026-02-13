@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .models import Tags
+from .models import Tags, People
 from rest_framework.response import Response
 from rest_framework import status 
-from .serializers import TagsSerializer
+from .serializers import TagsSerializer, PeopleSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from accounts.models import User
+
 
 class TagsViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -102,3 +103,19 @@ class TagsViewSet(viewsets.ViewSet):
             status=status.HTTP_204_NO_CONTENT
         )
 
+# create operation for people 
+class PeopleViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, user_id=None):
+        """List user for a specific user"""
+        if request.user.id != user_id:
+            return Response({"detail": "You don't have permission to view these tags."}, 
+                          status=status.HTTP_403_FORBIDDEN)
+        
+        people = People.objects.filter(user_id=user_id)
+        if not people.exists():
+            return Response({"people": [], "detail": "No People found for this user."}, 
+                          status=status.HTTP_200_OK)
+        serializer = PeopleSerializer(people, many=True)
+        return Response({"people": serializer.data}, status=status.HTTP_200_OK)

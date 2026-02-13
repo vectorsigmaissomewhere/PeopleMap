@@ -30,6 +30,7 @@ class People(models.Model):
     name = models.CharField(max_length=255)  
     notes = models.TextField() 
     
+    # Optional fields
     email = models.CharField(max_length=255, null=True, blank=True)
     phone = models.CharField(max_length=255, null=True, blank=True)
     company = models.CharField(max_length=255, null=True, blank=True)
@@ -42,10 +43,11 @@ class People(models.Model):
     country = models.CharField(max_length=255, null=True, blank=True)
     image = models.CharField(max_length=255, null=True, blank=True)
     
-    tags = models.ManyToManyField(
+    tag = models.ForeignKey(
         Tags, 
+        on_delete=models.SET_NULL, 
         related_name='people',
-        blank=True  
+        null=True, 
     )
     
     created_at = models.DateTimeField(auto_now_add=True)

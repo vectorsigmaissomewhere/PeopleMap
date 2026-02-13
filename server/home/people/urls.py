@@ -1,5 +1,5 @@
 from django.urls import path, include
-from people.views import TagsViewSet
+from people.views import TagsViewSet, PeopleViewSet
 
 urlpatterns = [
     path('tags/user/<int:user_id>/', TagsViewSet.as_view({'get': 'list'}), name='user-tags-list'),
@@ -9,6 +9,7 @@ urlpatterns = [
         'put': 'update',
         'patch': 'partial_update',
         'delete': 'destroy'
-    }), name='user-tags-detail')
+    }), name='user-tags-detail'),
     
+    path('peoplelist/user/<int:user_id>/', PeopleViewSet.as_view({'get':'list'}), name='people-list'),
 ]

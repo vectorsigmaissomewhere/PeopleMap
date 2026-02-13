@@ -11,15 +11,36 @@ import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const COLORS = [
-  '#6366F1',
-  '#22C55E',
-  '#EF4444',
-  '#F59E0B',
-  '#3B82F6',
-  '#A855F7',
-  '#EC4899',
-  '#10B981',
+  // Blues
+  '#6366F1', // Indigo
+  '#3B82F6', // Blue
+  '#0EA5E9', // Sky
+  '#0284C7', // Deep Blue
+
+  // Greens
+  '#22C55E', // Green
+  '#10B981', // Emerald
+  '#16A34A', // Dark Green
+  '#4ADE80', // Light Green
+
+  // Reds / Oranges
+  '#EF4444', // Red
+  '#F97316', // Orange
+  '#F59E0B', // Amber
+  '#FB923C', // Soft Orange
+
+  // Purples / Pinks
+  '#A855F7', // Purple
+  '#8B5CF6', // Violet
+  '#EC4899', // Pink
+  '#F472B6', // Soft Pink
+
+  // Teals / Cyans
+  '#14B8A6', // Teal
+  '#06B6D4', // Cyan
+  '#0891B2', // Deep Cyan
 ];
+
 
 export default function GroupsAndTags() {
   const dispatch = useDispatch();
@@ -99,39 +120,41 @@ export default function GroupsAndTags() {
         </p>
 
         {/* Create Tag */}
-        <div className="bg-white border rounded-2xl p-6 shadow-sm mb-8">
-          <h2 className="text-lg font-medium mb-4 text-gray-900">
-            Create Tag
-          </h2>
+<div className="bg-white border rounded-2xl p-4 sm:p-6 shadow-sm mb-8">
+  <h2 className="text-lg font-medium mb-4 text-gray-900">
+    Create Tag
+  </h2>
 
-          <div className="flex gap-3 mb-4">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. VIP Client, Follow Up"
-              className="flex-1 border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <button
-              onClick={submit}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl flex items-center gap-2"
-            >
-              <Plus size={18} /> Add
-            </button>
-          </div>
+  <div className="flex flex-col sm:flex-row gap-3 mb-4">
+    <input
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      placeholder="e.g. VIP Client, Follow Up"
+      className="w-full sm:flex-1 border rounded-xl px-4 py-2.5 sm:py-2 outline-none focus:ring-2 focus:ring-indigo-500 text-base"
+    />
+    <button
+      onClick={submit}
+      className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 sm:py-2 rounded-xl flex items-center justify-center gap-2 transition-colors"
+    >
+      <Plus size={18} /> 
+      <span className="sm:inline">Add</span>
+    </button>
+  </div>
 
-          <div className="flex gap-3">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
-                className={`w-8 h-8 rounded-full border-2 ${
-                  color === c ? 'border-gray-900' : 'border-transparent'
-                }`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
-        </div>
+  <div className="flex flex-wrap gap-2 sm:gap-3">
+    {COLORS.map((c) => (
+      <button
+        key={c}
+        onClick={() => setColor(c)}
+        className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+          color === c ? 'border-gray-900 ring-2 ring-offset-2 ring-gray-900' : 'border-transparent'
+        }`}
+        style={{ backgroundColor: c }}
+        aria-label={`Select color ${c}`}
+      />
+    ))}
+  </div>
+</div>
 
         {/* All Tags */}
         <div className="bg-white border rounded-2xl p-6 shadow-sm">

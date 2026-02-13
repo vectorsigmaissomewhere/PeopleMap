@@ -35,7 +35,19 @@ class TagsViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
-        pass 
+        """Get a single tag by its ID"""
+        tag = get_object_or_404(Tags, tags_id=pk)
+    
+        # Check if the user owns this tag
+        if request.user.id != tag.user_id:
+            return Response(
+                {"detail": "You don't have permission to view this tag."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+        serializer = TagsSerializer(tag)
+        return Response(serializer.data)
+    
     def update(self, request, pk=None):
         pass 
     def partial_update(self, request, pk=None):

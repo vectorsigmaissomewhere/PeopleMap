@@ -224,6 +224,7 @@ class CheckAuthView(APIView):
         return Response({
             "success": True,
             "user": {
+                "id": user.id,
                 "email": user.email,
                 "name": user.name
             }

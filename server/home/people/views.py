@@ -49,9 +49,56 @@ class TagsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     def update(self, request, pk=None):
-        pass 
+        """Fully update a tag (PUT)"""
+        tag = get_object_or_404(Tags, tags_id=pk)
+        
+        if request.user.id != tag.user_id:
+            return Response(
+                {"detail": "You don't have permission to update this tag."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = TagsSerializer(tag, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {'msg': 'Tag updated successfully', 'data': serializer.data}, 
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     def partial_update(self, request, pk=None):
-        pass 
+        """Partially update a tag (PATCH)"""
+        tag = get_object_or_404(Tags, tags_id=pk)
+        
+        if request.user.id != tag.user_id:
+            return Response(
+                {"detail": "You don't have permission to update this tag."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = TagsSerializer(tag, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {'msg': 'Tag updated successfully', 'data': serializer.data}, 
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     def destroy(self, request, pk=None):
-        pass 
+        """Delete a tag"""
+        tag = get_object_or_404(Tags, tags_id=pk)
+        
+        if request.user.id != tag.user_id:
+            return Response(
+                {"detail": "You don't have permission to delete this tag."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        tag.delete()
+        return Response(
+            {'msg': 'Tag deleted successfully'}, 
+            status=status.HTTP_204_NO_CONTENT
+        )
 

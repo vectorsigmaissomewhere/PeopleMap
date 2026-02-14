@@ -7,6 +7,9 @@ from .serializers import TagsSerializer, PeopleSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from accounts.models import User
+from .models import Credit
+from django.db import transaction
+from rest_framework.views import APIView
 
 
 class TagsViewSet(viewsets.ViewSet):
@@ -120,3 +123,179 @@ class PeopleViewSet(viewsets.ViewSet):
         serializer = PeopleSerializer(people, many=True)
         return Response({"people": serializer.data}, status=status.HTTP_200_OK)
     
+    def create(self, request):
+        """Create a new person - requires available credits"""
+        
+        # Check if user has credits
+        try:
+            # Get or create credit record for the user
+            credit, created = Credit.objects.get_or_create(
+                user=request.user,
+                defaults={'credit_number': 0}  # Default to 0 if not exists
+            )
+            
+            # Check if user has at least 1 credit
+            if credit.credit_number < 1:
+                return Response({
+                    'error': 'Insufficient credits',
+                    'message': f'You need at least 1 credit to add a person. Current credits: {credit.credit_number}',
+                    'current_credits': credit.credit_number,
+                    'required_credits': 1
+                }, status=status.HTTP_402_PAYMENT_REQUIRED)  # 402 Payment Required is appropriate for credit issues
+            
+        except Exception as e:
+            return Response({
+                'error': 'Credit check failed',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Use transaction to ensure both operations succeed or fail together
+        with transaction.atomic():
+            # Create the person
+            serializer = PeopleSerializer(data=request.data, context={'request': request})
+            
+            if serializer.is_valid():
+                # Save the person
+                person = serializer.save()
+                
+                # Subtract 1 credit
+                credit.credit_number -= 1
+                credit.save()
+                
+                # You might want to create a credit transaction log here
+                # CreditTransaction.objects.create(
+                #     user=request.user,
+                #     amount=-1,
+                #     description=f"Added person: {person.name}",
+                #     balance_after=credit.credit_number
+                # )
+                
+                return Response({
+                    'msg': 'Person created successfully',
+                    'data': serializer.data,
+                    'credits_remaining': credit.credit_number,
+                    'credits_used': 1
+                }, status=status.HTTP_201_CREATED)
+            
+            # If serializer is invalid, the transaction will roll back automatically
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        """Get a single person by their ID"""
+        person = get_object_or_404(People, people_id=pk)
+        
+        # Check if the user owns this person
+        if request.user.id != person.user_id:
+            return Response(
+                {"detail": "You don't have permission to view this person."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = PeopleSerializer(person)
+        return Response(serializer.data)
+    
+    def update(self, request, pk=None):
+        """Fully update a person (PUT)"""
+        person = get_object_or_404(People, people_id=pk)
+        
+        if request.user.id != person.user_id:
+            return Response(
+                {"detail": "You don't have permission to update this person."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Note: Updating a person doesn't cost credits
+        serializer = PeopleSerializer(person, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {'msg': 'Person updated successfully', 'data': serializer.data}, 
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def partial_update(self, request, pk=None):
+        """Partially update a person (PATCH)"""
+        person = get_object_or_404(People, people_id=pk)
+        
+        if request.user.id != person.user_id:
+            return Response(
+                {"detail": "You don't have permission to update this person."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Note: Updating a person doesn't cost credits
+        serializer = PeopleSerializer(person, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {'msg': 'Person updated successfully', 'data': serializer.data}, 
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, pk=None):
+        """Delete a person and refund 1 credit"""
+        person = get_object_or_404(People, people_id=pk)
+    
+        # Check if the user owns this person
+        if request.user.id != person.user_id:
+            return Response(
+                {"detail": "You don't have permission to delete this person."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+        # Use transaction to ensure both operations succeed or fail together
+        with transaction.atomic():
+            # Get the person's name for the response message
+            person_name = person.name
+        
+            # Delete the person
+            person.delete()
+        
+            # Get or create credit record for the user
+            credit, created = Credit.objects.get_or_create(
+                user=request.user,
+                defaults={'credit_number': 0}
+            )
+        
+            # Increase credit by 1 (refund)
+            credit.credit_number += 1
+            credit.save()
+        
+            # You might want to create a credit transaction log here
+            # CreditTransaction.objects.create(
+            #     user=request.user,
+            #     amount=1,
+            #     description=f"Deleted person: {person_name} - Credit refunded",
+            #     balance_after=credit.credit_number
+            # )
+    
+        return Response({
+            'msg': 'Person deleted successfully',
+            'credits_refunded': 1,
+            'credits_remaining': credit.credit_number,
+            'person_deleted': person_name
+        }, status=status.HTTP_200_OK)  
+
+class CheckCreditsView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            credit, created = Credit.objects.get_or_create(
+                user=request.user,
+                defaults={'credit_number': 0}
+            )
+            
+            return Response({
+                'credits': credit.credit_number,
+                'can_add_person': credit.credit_number >= 1
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Failed to retrieve credits',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

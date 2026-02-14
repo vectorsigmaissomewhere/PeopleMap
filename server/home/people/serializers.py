@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from .models import Tags, People
+from .models import Tags, People, Credit
 
 class TagsSerializer(serializers.ModelSerializer):
     class Meta: 
@@ -15,4 +15,14 @@ class PeopleSerializer(serializers.ModelSerializer):
     class Meta:
         model = People
         fields = '__all__'
-        many = True 
+        read_only_fields = ['user'] 
+    
+    def create(self, validated_data):
+        user = self.context['request'].user
+        person = People.objects.create(user=user, **validated_data)
+        return person
+
+class CreditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Credit
+        fields = ['credit_id', 'credit_number']

@@ -70,3 +70,16 @@ class Credit(models.Model):
     credit_number = models.IntegerField()
 
 
+class CreditTransaction(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='credit_transactions'
+    )
+    amount = models.IntegerField()  # Can be negative for deductions, positive for additions
+    description = models.CharField(max_length=255)
+    balance_after = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']

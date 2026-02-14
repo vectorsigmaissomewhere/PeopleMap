@@ -119,3 +119,4 @@ class PeopleViewSet(viewsets.ViewSet):
                           status=status.HTTP_200_OK)
         serializer = PeopleSerializer(people, many=True)
         return Response({"people": serializer.data}, status=status.HTTP_200_OK)
+    

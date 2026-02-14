@@ -22,7 +22,7 @@ function CheckAuth({ isAuthenticated, children }) {
   }
 
   if (isAuthenticated && isAuthPage) {
-    return <Navigate to="/people/home" />;
+    return <Navigate to="/people/dashboard" />;
   }
 
   return <>{children}</>;

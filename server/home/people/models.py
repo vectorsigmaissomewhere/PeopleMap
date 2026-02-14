@@ -22,7 +22,7 @@ class People(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
-        related_name='people' 
+        related_name='user_people' 
     )
     people_id = models.BigAutoField(primary_key=True)
 
@@ -59,3 +59,14 @@ class People(models.Model):
     
     def __str__(self):
         return self.name
+    
+class Credit(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name='user_credits' 
+    )
+    credit_id = models.BigAutoField(primary_key=True)
+    credit_number = models.IntegerField()
+
+

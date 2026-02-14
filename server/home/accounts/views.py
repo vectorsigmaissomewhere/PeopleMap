@@ -7,7 +7,8 @@ from accounts.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken 
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets
-from .models import User 
+from .models import User
+from people.models import Credit
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -181,8 +182,13 @@ class VerifyEmailView(APIView):
         
         if serializer.is_valid(raise_exception=True):
             user = serializer.save()
-            
-            # Generate token for immediate login after verification
+            try:
+                credit, created = Credit.objects.get_or_create(
+                    user=user,
+                    defaults={'credit_number': 100}
+                )
+            except Exception as e:
+                print(f"Error creating credits for user {user.email}: {e}")
             token = get_token_for_user(user)
             
             return Response({

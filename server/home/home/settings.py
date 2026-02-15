@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'accounts',
     'people',
+    'cloudinary',
+    'cloudinary_storage'
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -172,5 +174,11 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'anishbro501625@gmail.com'
 EMAIL_HOST_PASSWORD = 'pdad csms oywv zcge'
 EMAIL_USE_TLS = True
+
+# Add Cloudinary settings
+CLOUDINARY_CLOUD_NAME = 'dszkdvueo'
+CLOUDINARY_API_KEY = '375317558874836'
+CLOUDINARY_API_SECRET = 'fr6aAY54AWHDKNVJ2QeUotk3Vu8'
+
 
 APPEND_SLASH = False

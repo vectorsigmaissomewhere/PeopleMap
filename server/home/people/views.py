@@ -10,6 +10,8 @@ from accounts.models import User
 from .models import Credit
 from django.db import transaction
 from rest_framework.views import APIView
+from .utils import upload_image_to_cloudinary, delete_image_from_cloudinary
+import cloudinary.uploader
 
 
 class TagsViewSet(viewsets.ViewSet):
@@ -106,6 +108,52 @@ class TagsViewSet(viewsets.ViewSet):
             status=status.HTTP_204_NO_CONTENT
         )
 
+
+class CloudinaryUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    def post(self, request):
+        """Upload image to Cloudinary"""
+        if 'image' not in request.FILES:
+            return Response({
+                'success': False,
+                'error': 'No image file provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        image_file = request.FILES['image']
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+        if image_file.content_type not in allowed_types:
+            return Response({
+                'success': False,
+                'error': 'Invalid file type. Please upload JPEG, PNG, GIF, or WEBP images.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate file size (max 5MB)
+        if image_file.size > 5 * 1024 * 1024:
+            return Response({
+                'success': False,
+                'error': 'File size too large. Maximum size is 5MB.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Upload to Cloudinary
+        result = upload_image_to_cloudinary(image_file, request.user.id)
+        
+        if result['success']:
+            return Response({
+                'success': True,
+                'url': result['url'],
+                'public_id': result['public_id']
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'success': False,
+                'error': result['error']
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
 # create operation for people 
 class PeopleViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -128,20 +176,18 @@ class PeopleViewSet(viewsets.ViewSet):
         
         # Check if user has credits
         try:
-            # Get or create credit record for the user
             credit, created = Credit.objects.get_or_create(
                 user=request.user,
-                defaults={'credit_number': 0}  # Default to 0 if not exists
+                defaults={'credit_number': 0}
             )
             
-            # Check if user has at least 1 credit
             if credit.credit_number < 1:
                 return Response({
                     'error': 'Insufficient credits',
                     'message': f'You need at least 1 credit to add a person. Current credits: {credit.credit_number}',
                     'current_credits': credit.credit_number,
                     'required_credits': 1
-                }, status=status.HTTP_402_PAYMENT_REQUIRED)  # 402 Payment Required is appropriate for credit issues
+                }, status=status.HTTP_402_PAYMENT_REQUIRED)
             
         except Exception as e:
             return Response({
@@ -151,24 +197,14 @@ class PeopleViewSet(viewsets.ViewSet):
         
         # Use transaction to ensure both operations succeed or fail together
         with transaction.atomic():
-            # Create the person
             serializer = PeopleSerializer(data=request.data, context={'request': request})
             
             if serializer.is_valid():
-                # Save the person
                 person = serializer.save()
                 
                 # Subtract 1 credit
                 credit.credit_number -= 1
                 credit.save()
-                
-                # You might want to create a credit transaction log here
-                # CreditTransaction.objects.create(
-                #     user=request.user,
-                #     amount=-1,
-                #     description=f"Added person: {person.name}",
-                #     balance_after=credit.credit_number
-                # )
                 
                 return Response({
                     'msg': 'Person created successfully',
@@ -177,9 +213,50 @@ class PeopleViewSet(viewsets.ViewSet):
                     'credits_used': 1
                 }, status=status.HTTP_201_CREATED)
             
-            # If serializer is invalid, the transaction will roll back automatically
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    def destroy(self, request, pk=None):
+        """Delete a person and refund 1 credit"""
+        person = get_object_or_404(People, people_id=pk)
+    
+        if request.user.id != person.user_id:
+            return Response(
+                {"detail": "You don't have permission to delete this person."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+        with transaction.atomic():
+            # Delete image from Cloudinary if it exists
+            if person.image and 'cloudinary' in person.image:
+                try:
+                    # Extract public_id from URL (you might want to store it separately)
+                    import re
+                    match = re.search(r'/v\d+/(.+?)\.', person.image)
+                    if match:
+                        public_id = match.group(1)
+                        delete_image_from_cloudinary(public_id)
+                except Exception as e:
+                    print(f"Error deleting image from Cloudinary: {e}")
+            
+            person_name = person.name
+            person.delete()
+        
+            credit, created = Credit.objects.get_or_create(
+                user=request.user,
+                defaults={'credit_number': 0}
+            )
+        
+            credit.credit_number += 1
+            credit.save()
+    
+        return Response({
+            'msg': 'Person deleted successfully',
+            'credits_refunded': 1,
+            'credits_remaining': credit.credit_number,
+            'person_deleted': person_name
+        }, status=status.HTTP_200_OK)
+    
+
     def retrieve(self, request, pk=None):
         """Get a single person by their ID"""
         person = get_object_or_404(People, people_id=pk)
@@ -234,49 +311,6 @@ class PeopleViewSet(viewsets.ViewSet):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def destroy(self, request, pk=None):
-        """Delete a person and refund 1 credit"""
-        person = get_object_or_404(People, people_id=pk)
-    
-        # Check if the user owns this person
-        if request.user.id != person.user_id:
-            return Response(
-                {"detail": "You don't have permission to delete this person."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-    
-        # Use transaction to ensure both operations succeed or fail together
-        with transaction.atomic():
-            # Get the person's name for the response message
-            person_name = person.name
-        
-            # Delete the person
-            person.delete()
-        
-            # Get or create credit record for the user
-            credit, created = Credit.objects.get_or_create(
-                user=request.user,
-                defaults={'credit_number': 0}
-            )
-        
-            # Increase credit by 1 (refund)
-            credit.credit_number += 1
-            credit.save()
-        
-            # You might want to create a credit transaction log here
-            # CreditTransaction.objects.create(
-            #     user=request.user,
-            #     amount=1,
-            #     description=f"Deleted person: {person_name} - Credit refunded",
-            #     balance_after=credit.credit_number
-            # )
-    
-        return Response({
-            'msg': 'Person deleted successfully',
-            'credits_refunded': 1,
-            'credits_remaining': credit.credit_number,
-            'person_deleted': person_name
-        }, status=status.HTTP_200_OK)  
 
 class CheckCreditsView(APIView):
     permission_classes = [IsAuthenticated]

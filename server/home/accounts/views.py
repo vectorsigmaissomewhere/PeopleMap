@@ -73,6 +73,7 @@ class UserLoginView(APIView):
                     'msg': 'Login Success',
                     'verified': True,
                     'user': {
+                        "id": user.id, 
                         'email': user.email,
                         'name': user.name
                     }
@@ -196,6 +197,7 @@ class VerifyEmailView(APIView):
                 'token': token,
                 'verified': True,
                 'user': {
+                    "id": user.id, 
                     'email': user.email,
                     'name': user.name
                 }

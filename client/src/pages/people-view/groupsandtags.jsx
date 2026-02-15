@@ -44,7 +44,7 @@ const COLORS = [
 
 export default function GroupsAndTags() {
   const dispatch = useDispatch();
-  const { user } = useSelector((s) => s.auth);
+  const { user } = useSelector((state) => state.auth);
   const { tags, isLoading, success, error, message } = useSelector(
     (s) => s.tags
   );
@@ -56,6 +56,7 @@ export default function GroupsAndTags() {
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState(COLORS[0]);
 
+  console.log(user?.id);
   // Fetch tags
   useEffect(() => {
     if (user?.id) dispatch(fetchTags(user.id));

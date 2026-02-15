@@ -2,7 +2,7 @@ import { useSelector } from "react-redux";
 
 function Dashboard(){
     const { user } = useSelector((state) => state.auth);
-    
+    console.log(user.name);
     return(
         <div className="p-8">
             <h1 className="text-2xl font-bold">

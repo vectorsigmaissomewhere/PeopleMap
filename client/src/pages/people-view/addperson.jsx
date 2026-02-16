@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetTitle, SheetContent, SheetHeader } from "@/components/ui/sheet";
-import CommonForm from "@/components/common/form";
 import { Input } from "@/components/ui/input";
 import { addPeopleFormElements } from "@/config";
 import PeopleImageUpload from "@/components/people-view/image-upload";
@@ -57,8 +55,11 @@ function AddPerson() {
 
   useEffect(() => {
     if (success && message) {
-      toast.success(message);
-      navigate("/people/list");
+       toast.success(message);
+    setFormData(initialFormData);
+    setImageFile(null);
+    setUploadedImageUrl("");
+    navigate("/people/add");
     }
     if (error) {
       toast.error(typeof error === 'string' ? error : error.message || 'Failed to add person');
@@ -92,10 +93,8 @@ function AddPerson() {
       return;
     }
 
-    // Prepare data for submission
     const submitData = { ...formData };
     
-    // If no tag selected, remove the field
     if (!submitData.tag) {
       delete submitData.tag;
     }
@@ -110,6 +109,15 @@ function AddPerson() {
       [fieldName]: value
     }));
   };
+  const handleTagChange = (value) => {
+    handleInputChange("tag", value === "no-tag" ? "" : value);
+  };
+
+  useEffect(() => {
+    if (tags && tags.length > 0) {
+      console.log("Tags structure:", tags[0]);
+    }
+  }, [tags]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -171,31 +179,50 @@ function AddPerson() {
                 </div>
               ))}
 
-              {/* Tag Selection */}
+              {/* Tag Selection - Fixed Version */}
               <div className="md:col-span-2">
                 <Label htmlFor="tag" className="text-sm font-medium">Assign Tag (Optional)</Label>
                 <Select
-                  value={formData.tag}
-                  onValueChange={(value) => handleInputChange("tag", value)}
+                  value={formData.tag || "no-tag"}
+                  onValueChange={handleTagChange}
                 >
                   <SelectTrigger className="w-full mt-1">
                     <SelectValue placeholder="Select a tag" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Tag</SelectItem>
-                    {tags?.map((tag) => (
-                      <SelectItem key={tag.tags_id} value={tag.tags_id}>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: tag.colorname }}
-                          />
-                          {tag.name}
-                        </div>
+                    {/* Use a special value "no-tag" instead of empty string */}
+                    <SelectItem value="no-tag">No Tag</SelectItem>
+                    {tags && tags.length > 0 ? (
+                      tags.map((tag) => {
+                        // Get the tag ID - check both possible property names
+                        const tagId = tag.tags_id || tag.id;
+                        // Get the color - check both possible property names
+                        const tagColor = tag.colorname || tag.color || "#808080";
+                        
+                        return (
+                          <SelectItem key={tagId} value={String(tagId)}>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: tagColor }}
+                              />
+                              {tag.name || tag.tag_name}
+                            </div>
+                          </SelectItem>
+                        );
+                      })
+                    ) : (
+                      <SelectItem value="no-tags-available" disabled>
+                        No tags available
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
+                {(!tags || tags.length === 0) && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    No tags found. Create tags first in the Tags section.
+                  </p>
+                )}
               </div>
             </div>
           </div>

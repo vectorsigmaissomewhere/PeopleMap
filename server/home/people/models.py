@@ -56,9 +56,17 @@ class People(models.Model):
     class Meta:
         verbose_name_plural = "People"
         unique_together = ['user', 'email']  
+        indexes = [
+            models.Index(fields=['user', 'email']),
+        ]
     
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self.email == "":
+            self.email = None
+        super().save(*args, **kwargs)
     
 class Credit(models.Model):
     user = models.ForeignKey(

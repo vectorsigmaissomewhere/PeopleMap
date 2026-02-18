@@ -13,18 +13,29 @@ class TagsSerializer(serializers.ModelSerializer):
     
 class PeopleSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
+    tag_details = serializers.SerializerMethodField()
     
     class Meta:
         model = People
         fields = [
             'people_id', 'name', 'notes', 'email', 'phone', 'company',
             'role', 'department', 'street', 'city', 'state', 'zip',
-            'country', 'image', 'image_url', 'tag', 'created_at', 'updated_at', 'user'
+            'country', 'image', 'image_url', 'tag', 'tag_details', 'created_at', 'updated_at', 'user'
         ]
-        read_only_fields = ['people_id', 'created_at', 'updated_at', 'user', 'image_url']
+        read_only_fields = ['people_id', 'created_at', 'updated_at', 'user', 'image_url','tag_details']
     
     def get_image_url(self, obj):
         return obj.image
+    
+    def get_tag_details(self, obj):
+        """Return full tag details if a tag exists"""
+        if obj.tag:
+            return {
+                'tags_id': obj.tag.tags_id,
+                'name': obj.tag.name,
+                'colorname': obj.tag.colorname
+            }
+        return None
     
     def validate_email(self, value):
         """Make empty string email become None to avoid unique constraint issues"""

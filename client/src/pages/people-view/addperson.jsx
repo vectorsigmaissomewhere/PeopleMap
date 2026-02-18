@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { addPeopleFormElements } from "@/config";
 import PeopleImageUpload from "@/components/people-view/image-upload";
 import { useDispatch, useSelector } from "react-redux";
-import { addNewPeople, checkCredits } from "@/store/people/people-slice";
+import { addNewPeople, checkCredits, clearPeopleState } from "@/store/people/people-slice";
 import { fetchTags } from "@/store/people/tags-slice";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -45,26 +45,51 @@ function AddPerson() {
   const [imageFile, setImageFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imageLoadingState, setImageLoadingState] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       dispatch(fetchTags(user.id));
       dispatch(checkCredits());
     }
+    
+    // Cleanup on component unmount
+    return () => {
+      dispatch(clearPeopleState());
+    };
   }, [user?.id, dispatch]);
 
   useEffect(() => {
     if (success && message) {
-       toast.success(message);
-    setFormData(initialFormData);
-    setImageFile(null);
-    setUploadedImageUrl("");
-    navigate("/people/add");
+      toast.success(message);
+      
+      // Reset form
+      setFormData(initialFormData);
+      setImageFile(null);
+      setUploadedImageUrl("");
+      setIsSubmitting(false);
+      
+      // Clear the file input if it exists
+      const fileInput = document.getElementById('image-upload');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      
+      // Clear Redux success state
+      dispatch(clearPeopleState());
+      
+      // Navigate to list or stay? Currently navigating to add page
+      // If you want to stay on add page to add another person, use:
+      // navigate("/people/add");
+      // If you want to go to list page, use:
+      navigate("/people/list");
     }
+    
     if (error) {
       toast.error(typeof error === 'string' ? error : error.message || 'Failed to add person');
+      setIsSubmitting(false);
     }
-  }, [success, error, message, navigate]);
+  }, [success, error, message, navigate, dispatch]);
 
   useEffect(() => {
     if (uploadedImageUrl) {
@@ -75,8 +100,13 @@ function AddPerson() {
     }
   }, [uploadedImageUrl]);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting || isLoading) {
+      return;
+    }
     
     if (!formData.name?.trim()) {
       toast.warning("Name is required");
@@ -93,24 +123,43 @@ function AddPerson() {
       return;
     }
 
+    // Prepare data for submission
     const submitData = { ...formData };
     
+    // If no tag selected, remove the field
     if (!submitData.tag) {
       delete submitData.tag;
     }
 
-    dispatch(addNewPeople(submitData));
+    setIsSubmitting(true);
+    
+    try {
+      await dispatch(addNewPeople(submitData)).unwrap();
+      // Success is handled in the useEffect above
+    } catch (error) {
+      console.error("Failed to add person:", error);
+      setIsSubmitting(false);
+    }
   };
 
-  // Handle form field changes
   const handleInputChange = (fieldName, value) => {
     setFormData((prev) => ({
       ...prev,
       [fieldName]: value
     }));
   };
+
   const handleTagChange = (value) => {
     handleInputChange("tag", value === "no-tag" ? "" : value);
+  };
+
+  const handleCancel = () => {
+    // Clear form and state
+    setFormData(initialFormData);
+    setImageFile(null);
+    setUploadedImageUrl("");
+    dispatch(clearPeopleState());
+    navigate("/people/list");
   };
 
   useEffect(() => {
@@ -164,6 +213,7 @@ function AddPerson() {
                       className="w-full border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 text-base mt-1"
                       rows={4}
                       required={element.required}
+                      disabled={isSubmitting || isLoading}
                     />
                   ) : (
                     <Input
@@ -174,29 +224,28 @@ function AddPerson() {
                       placeholder={element.placeholder}
                       className="mt-1"
                       required={element.required}
+                      disabled={isSubmitting || isLoading}
                     />
                   )}
                 </div>
               ))}
 
-              {/* Tag Selection - Fixed Version */}
+              {/* Tag Selection */}
               <div className="md:col-span-2">
                 <Label htmlFor="tag" className="text-sm font-medium">Assign Tag (Optional)</Label>
                 <Select
                   value={formData.tag || "no-tag"}
                   onValueChange={handleTagChange}
+                  disabled={isSubmitting || isLoading}
                 >
                   <SelectTrigger className="w-full mt-1">
                     <SelectValue placeholder="Select a tag" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Use a special value "no-tag" instead of empty string */}
                     <SelectItem value="no-tag">No Tag</SelectItem>
                     {tags && tags.length > 0 ? (
                       tags.map((tag) => {
-                        // Get the tag ID - check both possible property names
                         const tagId = tag.tags_id || tag.id;
-                        // Get the color - check both possible property names
                         const tagColor = tag.colorname || tag.color || "#808080";
                         
                         return (
@@ -232,17 +281,25 @@ function AddPerson() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/people/list")}
+              onClick={handleCancel}
               className="px-6 py-2.5"
+              disabled={isSubmitting || isLoading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || credits < 1}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5"
+              disabled={isSubmitting || isLoading || credits < 1}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 min-w-[120px]"
             >
-              {isLoading ? "Adding..." : "Add Person"}
+              {isSubmitting || isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Adding...
+                </div>
+              ) : (
+                "Add Person"
+              )}
             </Button>
           </div>
         </form>

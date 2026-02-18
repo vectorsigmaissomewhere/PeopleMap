@@ -84,7 +84,7 @@ class CreditTransaction(models.Model):
         on_delete=models.CASCADE,
         related_name='credit_transactions'
     )
-    amount = models.IntegerField()  # Can be negative for deductions, positive for additions
+    amount = models.IntegerField() 
     description = models.CharField(max_length=255)
     balance_after = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)

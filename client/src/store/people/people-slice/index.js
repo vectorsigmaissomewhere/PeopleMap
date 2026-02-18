@@ -8,22 +8,46 @@ const initialState = {
     error: null,
     message: null,
     success: false,
-    credits: 0
+    credits: 0,
+    pagination: {
+        count: 0,
+        next: null,
+        previous: null,
+        currentPage: 1,
+        pageSize: 10,
+        totalPages: 1
+    },
+    filters: {
+        search: '',
+        tag: '',
+        company: '',
+        city: ''
+    }
 };
 
 // Fetch all people for a user
 export const fetchPeople = createAsyncThunk(
     'people/fetchPeople',
-    async (userId, { rejectWithValue, getState }) => {
+    async ({ userId, page = 1, pageSize = 10, search = '', tag = '', company = '', city = '' }, { rejectWithValue, getState }) => {
         try {
+            console.log("This is the fetch people api");
             const { auth } = getState();
+            console.log(auth);
             const token = auth?.token?.access || localStorage.getItem('accessToken');
             
-            const response = await axios.get(`/api/people/people/user/${userId}/`, {
+            let url = `/api/people/people/user/${userId}/?page=${page}&page_size=${pageSize}`;
+            console.log(url);
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+            if (company) url += `&company=${encodeURIComponent(company)}`;
+            if (city) url += `&city=${encodeURIComponent(city)}`;
+            
+            const response = await axios.get(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
+            console.log(response.data);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || { msg: 'Failed to fetch people' });
@@ -88,6 +112,7 @@ export const fetchPersonById = createAsyncThunk(
                     'Authorization': `Bearer ${token}`
                 }
             });
+            console.log(response.data);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || { msg: 'Failed to fetch person' });
@@ -166,26 +191,90 @@ const peopleSlice = createSlice({
         },
         clearCurrentPerson: (state) => {
             state.person = null;
+        },
+        setFilters: (state, action) => {
+            state.filters = { ...state.filters, ...action.payload };
+        },
+        clearFilters: (state) => {
+            state.filters = {
+                search: '',
+                tag: '',
+                company: '',
+                city: ''
+            };
+        },
+        setCurrentPage: (state, action) => {
+            state.pagination.currentPage = action.payload;
+        },
+        setPageSize: (state, action) => {
+            state.pagination.pageSize = action.payload;
+            state.pagination.currentPage = 1; 
+        },
+        resetPagination: (state) => {
+            state.pagination = {
+                ...initialState.pagination,
+                currentPage: 1
+            };
         }
     },
     extraReducers: (builder) => {
         builder
-            // Fetch People
+            // Fetch People - FIXED HERE
             .addCase(fetchPeople.pending, (state) => {
                 state.isLoading = true;
                 state.error = null;
             })
             .addCase(fetchPeople.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.people = action.payload.people || [];
+                
+                // Based on your API response structure:
+                // {
+                //   count: 8,
+                //   next: null,
+                //   previous: null,
+                //   results: {
+                //     people: [...],
+                //     filtered_count: 8,
+                //     total_count: 8
+                //   }
+                // }
+                
+                // Extract people from the nested structure
+                if (action.payload?.results?.people) {
+                    state.people = action.payload.results.people;
+                    state.pagination.count = action.payload.results.total_count || action.payload.count || state.people.length;
+                } 
+                // Fallback for other possible structures
+                else if (action.payload?.people) {
+                    state.people = action.payload.people;
+                    state.pagination.count = action.payload.count || action.payload.total_count || state.people.length;
+                } 
+                else if (action.payload?.results) {
+                    state.people = action.payload.results;
+                    state.pagination.count = action.payload.count || state.people.length;
+                } 
+                else {
+                    state.people = action.payload || [];
+                    state.pagination.count = state.people.length;
+                }
+                
+                // Update pagination info
+                state.pagination = {
+                    ...state.pagination,
+                    count: state.pagination.count,
+                    next: action.payload.next || null,
+                    previous: action.payload.previous || null,
+                    totalPages: Math.ceil(state.pagination.count / state.pagination.pageSize)
+                };
             })
             .addCase(fetchPeople.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload?.detail || action.payload?.msg || 'Failed to fetch people';
                 state.people = [];
+                state.pagination.count = 0;
+                state.pagination.totalPages = 1;
             })
             
-            // Add Person
             .addCase(addNewPeople.pending, (state) => {
                 state.isLoading = true;
                 state.error = null;
@@ -193,10 +282,12 @@ const peopleSlice = createSlice({
             })
             .addCase(addNewPeople.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.people.push(action.payload.data);
+                state.people.unshift(action.payload.data);
                 state.credits = action.payload.credits_remaining;
                 state.message = action.payload.msg;
                 state.success = true;
+                state.pagination.count += 1;
+                state.pagination.totalPages = Math.ceil(state.pagination.count / state.pagination.pageSize);
             })
             .addCase(addNewPeople.rejected, (state, action) => {
                 state.isLoading = false;
@@ -204,21 +295,80 @@ const peopleSlice = createSlice({
                 state.success = false;
             })
             
-            // Check Credits
             .addCase(checkCredits.fulfilled, (state, action) => {
                 state.credits = action.payload.credits;
             })
             
-            // Delete Person
+            .addCase(deletePerson.pending, (state) => {
+                state.isLoading = true;
+            })
             .addCase(deletePerson.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.people = state.people.filter(person => person.people_id !== action.payload.personId);
                 state.credits = action.payload.data.credits_remaining;
                 state.message = action.payload.data.msg;
                 state.success = true;
+                
+                state.pagination.count -= 1;
+                state.pagination.totalPages = Math.ceil(state.pagination.count / state.pagination.pageSize);
+
+                if (state.people.length === 0 && state.pagination.currentPage > 1) {
+                    state.pagination.currentPage -= 1;
+                }
+            })
+            .addCase(deletePerson.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload?.msg || 'Failed to delete person';
+                state.success = false;
+            })
+            
+            .addCase(fetchPersonById.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchPersonById.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.person = action.payload;
+            })
+            .addCase(fetchPersonById.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload?.detail || action.payload?.msg || 'Failed to fetch person';
+                state.person = null;
+            })
+            
+            .addCase(updatePerson.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+                state.success = false;
+            })
+            .addCase(updatePerson.fulfilled, (state, action) => {
+                state.isLoading = false;
+                const index = state.people.findIndex(p => p.people_id === action.payload.data.people_id);
+                if (index !== -1) {
+                    state.people[index] = action.payload.data;
+                }
+                if (state.person?.people_id === action.payload.data.people_id) {
+                    state.person = action.payload.data;
+                }
+                state.message = action.payload.msg;
+                state.success = true;
+            })
+            .addCase(updatePerson.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload?.msg || 'Failed to update person';
+                state.success = false;
             });
     }
 });
 
-export const { clearPeopleState, clearCurrentPerson } = peopleSlice.actions;
+export const { 
+    clearPeopleState, 
+    clearCurrentPerson,
+    setFilters,
+    clearFilters,
+    setCurrentPage,
+    setPageSize,
+    resetPagination
+} = peopleSlice.actions;
+
 export default peopleSlice.reducer;

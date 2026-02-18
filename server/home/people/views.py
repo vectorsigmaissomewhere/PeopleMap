@@ -13,8 +13,14 @@ from rest_framework.views import APIView
 from rest_framework import parsers
 from .utils import upload_image_to_cloudinary, delete_image_from_cloudinary
 import cloudinary.uploader
+from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class TagsViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -156,22 +162,80 @@ class CloudinaryUploadView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-# create operation for people 
+# Updated PeopleViewSet with Pagination, Filtering, and Search
 class PeopleViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    @property
+    def paginator(self):
+        if not hasattr(self, '_paginator'):
+            self._paginator = self.pagination_class()
+        return self._paginator
+
+    def paginate_queryset(self, queryset):
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    def get_paginated_response(self, data):
+        assert self.paginator is not None
+        return self.paginator.get_paginated_response(data)
 
     def list(self, request, user_id=None):
-        """List user for a specific user"""
+        """List people for a specific user with pagination, filtering, and search"""
         if request.user.id != user_id:
-            return Response({"detail": "You don't have permission to view these tags."}, 
+            return Response({"detail": "You don't have permission to view these people."}, 
                           status=status.HTTP_403_FORBIDDEN)
         
-        people = People.objects.filter(user_id=user_id)
-        if not people.exists():
-            return Response({"people": [], "detail": "No People found for this user."}, 
-                          status=status.HTTP_200_OK)
+        # Start with base queryset
+        people = People.objects.filter(user_id=user_id).select_related('tag').order_by('-created_at')
+        
+        # Apply search if provided
+        search_query = request.query_params.get('search', '')
+        if search_query:
+            people = people.filter(
+                Q(name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(company__icontains=search_query) |
+                Q(city__icontains=search_query) |
+                Q(phone__icontains=search_query) |
+                Q(role__icontains=search_query)
+            )
+        
+        # Apply tag filtering if provided
+        tag_id = request.query_params.get('tag', '')
+        if tag_id:
+            if tag_id.lower() == 'none' or tag_id == '':
+                people = people.filter(tag__isnull=True)
+            else:
+                people = people.filter(tag_id=tag_id)
+        
+        # Apply additional filters
+        company = request.query_params.get('company', '')
+        if company:
+            people = people.filter(company__icontains=company)
+        
+        city = request.query_params.get('city', '')
+        if city:
+            people = people.filter(city__icontains=city)
+        
+        # Pagination
+        page = self.paginate_queryset(people)
+        if page is not None:
+            serializer = PeopleSerializer(page, many=True)
+            return self.get_paginated_response({
+                'people': serializer.data,
+                'total_count': people.count(),
+                'filtered_count': len(page)
+            })
+        
+        # If no pagination, return all results
         serializer = PeopleSerializer(people, many=True)
-        return Response({"people": serializer.data}, status=status.HTTP_200_OK)
+        return Response({
+            'people': serializer.data,
+            'total_count': people.count()
+        }, status=status.HTTP_200_OK)
     
     def create(self, request):
         """Create a new person - requires available credits"""

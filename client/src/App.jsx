@@ -10,6 +10,8 @@ import AddPerson from "./pages/people-view/addperson";
 import GroupsAndTags from "./pages/people-view/groupsandtags";
 import Analytics from "./pages/people-view/analytics";
 import Settings from "./pages/people-view/settings";
+import PersonDetails from "./pages/people-view/PersonDetails";
+import EditPerson from "./pages/people-view/EditPerson";
 
 import PeopleLayout from "./components/people-view/layout";
 import ForgetPassword from "./pages/auth/forgetpassword";
@@ -23,6 +25,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { checkAuth, setLoading } from "./store/auth-slice";
 import axios from 'axios';
+
+
 
 
 
@@ -98,6 +102,8 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="list" element={<PeopleList />} />
           <Route path="add" element={<AddPerson />} />
+          <Route path=":id" element={<PersonDetails />} />
+          <Route path="edit/:id" element={<EditPerson />} />
           <Route path="groups" element={<GroupsAndTags />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />

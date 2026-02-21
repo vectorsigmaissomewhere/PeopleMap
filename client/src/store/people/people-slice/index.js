@@ -188,6 +188,7 @@ const peopleSlice = createSlice({
             state.error = null;
             state.message = null;
             state.success = false;
+            state.isLoading = false;
         },
         clearCurrentPerson: (state) => {
             state.person = null;

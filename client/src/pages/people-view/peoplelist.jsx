@@ -7,7 +7,8 @@ import {
     clearFilters,
     setCurrentPage,
     setPageSize,
-    deletePerson
+    deletePerson,
+    clearCurrentPerson
 } from "@/store/people/people-slice";
 import { fetchTags } from "@/store/people/tags-slice";
 import { Button } from "@/components/ui/button";
@@ -541,7 +542,9 @@ function PeopleList() {
                                                             View Details
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
-                                                            onClick={() => navigate(`/people/edit/${person?.people_id}`)}
+                                                            onClick={() => {
+                                                                dispatch(clearCurrentPerson());
+                                                                navigate(`/people/edit/${person?.people_id}`)}}
                                                         >
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Edit

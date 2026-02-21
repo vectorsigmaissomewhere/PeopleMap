@@ -17,6 +17,8 @@ from django.db.models import Q
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Count
+from collections import Counter
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -430,4 +432,87 @@ class DashboardStatsView(APIView):
             'contacts_this_week': contacts_this_week,
             'total_tags': total_tags,
             'recent_contacts': recent_contacts_serializer.data
+        }, status=status.HTTP_200_OK)
+
+# Add this new view for analytics
+class AnalyticsView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Get company distribution (top 10)
+        company_data = (
+            People.objects.filter(user=user)
+            .exclude(company__isnull=True)
+            .exclude(company__exact='')
+            .values('company')
+            .annotate(count=Count('company'))
+            .order_by('-count')[:10]
+        )
+        
+        # Format company data for chart
+        companies = [item['company'] for item in company_data]
+        company_counts = [item['count'] for item in company_data]
+        
+        # Get tag distribution (top 10)
+        tag_data = (
+            People.objects.filter(user=user, tag__isnull=False)
+            .values('tag__name', 'tag__colorname')
+            .annotate(count=Count('tag'))
+            .order_by('-count')[:10]
+        )
+        
+        # Format tag data for chart
+        tags = [item['tag__name'] for item in tag_data]
+        tag_counts = [item['count'] for item in tag_data]
+        tag_colors = [item['tag__colorname'] for item in tag_data]
+        
+        # Get summary statistics
+        total_with_company = People.objects.filter(
+            user=user
+        ).exclude(
+            company__isnull=True
+        ).exclude(
+            company__exact=''
+        ).count()
+        
+        total_with_tag = People.objects.filter(
+            user=user,
+            tag__isnull=False
+        ).count()
+        
+        total_contacts = People.objects.filter(user=user).count()
+        
+        # Get contacts without company or tag
+        no_company_count = People.objects.filter(
+            user=user
+        ).filter(
+            Q(company__isnull=True) | Q(company__exact='')
+        ).count()
+        
+        no_tag_count = People.objects.filter(
+            user=user,
+            tag__isnull=True
+        ).count()
+        
+        return Response({
+            'company_chart': {
+                'labels': companies,
+                'data': company_counts,
+                'total_with_company': total_with_company,
+                'no_company_count': no_company_count
+            },
+            'tag_chart': {
+                'labels': tags,
+                'data': tag_counts,
+                'colors': tag_colors,
+                'total_with_tag': total_with_tag,
+                'no_tag_count': no_tag_count
+            },
+            'summary': {
+                'total_contacts': total_contacts,
+                'total_companies': len(companies),
+                'total_tags': len(tags)
+            }
         }, status=status.HTTP_200_OK)

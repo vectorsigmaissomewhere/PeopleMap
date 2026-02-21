@@ -15,7 +15,8 @@ from .utils import upload_image_to_cloudinary, delete_image_from_cloudinary
 import cloudinary.uploader
 from django.db.models import Q
 from rest_framework.pagination import PageNumberPagination
-
+from django.utils import timezone
+from datetime import timedelta
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -399,3 +400,34 @@ class CheckCreditsView(APIView):
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class DashboardStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Calculate date for "this week" (last 7 days)
+        week_ago = timezone.now() - timedelta(days=7)
+        
+        # Get total contacts
+        total_contacts = People.objects.filter(user=user).count()
+        
+        # Get contacts added this week
+        contacts_this_week = People.objects.filter(
+            user=user,
+            created_at__gte=week_ago
+        ).count()
+        
+        # Get total tags
+        total_tags = Tags.objects.filter(user=user).count()
+        
+        # Get 5 most recent contacts
+        recent_contacts = People.objects.filter(user=user).order_by('-created_at')[:5]
+        recent_contacts_serializer = PeopleSerializer(recent_contacts, many=True)
+        
+        return Response({
+            'total_contacts': total_contacts,
+            'contacts_this_week': contacts_this_week,
+            'total_tags': total_tags,
+            'recent_contacts': recent_contacts_serializer.data
+        }, status=status.HTTP_200_OK)

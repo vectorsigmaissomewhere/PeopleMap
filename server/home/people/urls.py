@@ -1,5 +1,5 @@
 from django.urls import path, include
-from people.views import TagsViewSet, PeopleViewSet, CheckCreditsView, CloudinaryUploadView
+from people.views import TagsViewSet, PeopleViewSet, CheckCreditsView, CloudinaryUploadView, DashboardStatsView
 
 urlpatterns = [
     path('tags/user/<int:user_id>/', TagsViewSet.as_view({'get': 'list'}), name='user-tags-list'),
@@ -22,4 +22,6 @@ urlpatterns = [
 
     path('check-credits/', CheckCreditsView.as_view(), name='check-credits'),
     path('upload-image/', CloudinaryUploadView.as_view(), name='upload-image'),
+
+    path('dashboard-stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
 ]

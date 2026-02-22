@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   User,
@@ -61,6 +60,22 @@ function Settings() {
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
 
+  // Track if we've already shown the success toast for this session
+  const hasShownProfileSuccess = useRef(false);
+  const hasShownPasswordSuccess = useRef(false);
+
+  // Clear all success states when component mounts
+  useEffect(() => {
+    // Force clear all success states immediately
+    dispatch(resetProfileUpdateSuccess());
+    dispatch(resetPasswordChangeSuccess());
+    dispatch(clearError());
+    
+    // Reset the refs
+    hasShownProfileSuccess.current = false;
+    hasShownPasswordSuccess.current = false;
+  }, [dispatch]);
+
   // Update profile form when user data changes
   useEffect(() => {
     if (user) {
@@ -71,33 +86,56 @@ function Settings() {
     }
   }, [user]);
 
-  // Handle success messages
+  // Handle profile update success
   useEffect(() => {
     if (profileUpdateSuccess) {
-      toast.success("Profile updated successfully");
-      dispatch(resetProfileUpdateSuccess());
+      if (!hasShownProfileSuccess.current) {
+        toast.success("Profile updated successfully");
+        hasShownProfileSuccess.current = true;
+      }
       setIsSubmittingProfile(false);
+      // Don't reset here - let the cleanup handle it
     }
+  }, [profileUpdateSuccess]);
+
+  // Handle password change success
+  useEffect(() => {
     if (passwordChangeSuccess) {
-      toast.success("Password changed successfully");
-      setPasswordForm({ password: "", password2: "" });
-      dispatch(resetPasswordChangeSuccess());
+      if (!hasShownPasswordSuccess.current) {
+        toast.success("Password changed successfully");
+        hasShownPasswordSuccess.current = true;
+        setPasswordForm({ password: "", password2: "" });
+      }
       setIsSubmittingPassword(false);
     }
+  }, [passwordChangeSuccess]);
+
+  // Handle general messages
+  useEffect(() => {
     if (message) {
       toast.success(message);
     }
-  }, [profileUpdateSuccess, passwordChangeSuccess, message, dispatch]);
+  }, [message]);
 
   // Handle error messages
   useEffect(() => {
     if (error) {
       toast.error(typeof error === 'string' ? error : 'An error occurred');
-      dispatch(clearError());
       setIsSubmittingProfile(false);
       setIsSubmittingPassword(false);
+      // Let the cleanup handle clearing error
     }
-  }, [error, dispatch]);
+  }, [error]);
+
+  // Cleanup effect when component unmounts
+  useEffect(() => {
+    return () => {
+      // This runs when component unmounts
+      dispatch(resetProfileUpdateSuccess());
+      dispatch(resetPasswordChangeSuccess());
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   // Handle profile update
   const handleProfileSubmit = async (e) => {
@@ -105,19 +143,18 @@ function Settings() {
     
     if (isSubmittingProfile) return;
 
-    // Validate
     if (!profileForm.name.trim()) {
       toast.warning("Display name is required");
       return;
     }
 
-    // Check if anything changed
     if (profileForm.name === user?.name && profileForm.email === user?.email) {
       toast.info("No changes to save");
       return;
     }
 
     setIsSubmittingProfile(true);
+    hasShownProfileSuccess.current = false;
     await dispatch(updateProfile(profileForm));
   };
 
@@ -127,7 +164,6 @@ function Settings() {
     
     if (isSubmittingPassword) return;
 
-    // Validate
     if (!passwordForm.password) {
       toast.warning("New password is required");
       return;
@@ -144,6 +180,7 @@ function Settings() {
     }
 
     setIsSubmittingPassword(true);
+    hasShownPasswordSuccess.current = false;
     await dispatch(changePassword(passwordForm));
   };
 
@@ -157,16 +194,6 @@ function Settings() {
       <div className="container mx-auto px-4 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-            {/*
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4 hover:bg-gray-200 dark:hover:bg-gray-800"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          */}
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Settings
           </h1>
@@ -336,9 +363,9 @@ function Settings() {
 
           {/* Appearance Section */}
           {/*
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl text-foreground">
+              <CardTitle className="flex items-center gap-2 text-xl dark:text-white">
                 {theme === 'light' ? (
                   <Sun className="w-5 h-5 text-yellow-500" />
                 ) : (
@@ -346,34 +373,34 @@ function Settings() {
                 )}
                 Appearance
               </CardTitle>
-              <CardDescription className="text-muted-foreground">
+              <CardDescription className="dark:text-gray-400">
                 Customize the look and feel
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label htmlFor="theme-toggle" className="text-foreground">
+                  <Label htmlFor="theme-toggle" className="dark:text-gray-300">
                     Dark Mode
                   </Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Use dark theme across the app
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Sun className={`w-5 h-5 ${theme === 'light' ? 'text-yellow-500' : 'text-muted-foreground'}`} />
+                  <Sun className={`w-5 h-5 ${theme === 'light' ? 'text-yellow-500' : 'text-gray-400 dark:text-gray-600'}`} />
                   <Switch
                     id="theme-toggle"
                     checked={theme === 'dark'}
                     onCheckedChange={handleThemeToggle}
+                    className="data-[state=checked]:bg-indigo-600"
                   />
-                  <Moon className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-muted-foreground'}`} />
+                  <Moon className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-400'}`} />
                 </div>
               </div>
             </CardContent>
           </Card>
           */}
-
           {/* Account Security Note */}
           <div className="text-center text-sm text-gray-500 dark:text-gray-500 mt-8">
             <p>Your account security is important to us</p>

@@ -1,4 +1,18 @@
-import { ChartNoAxesCombined, LayoutDashboard, ShoppingBasket, Truck, Users, Tags, Settings, BarChart } from "lucide-react";
+import { 
+  ChartNoAxesCombined, 
+  LayoutDashboard, 
+  ShoppingBasket, 
+  Truck, 
+  Users, 
+  Tags, 
+  Settings, 
+  BarChart,
+  UserPlus,
+  CreditCard,
+  Tag,
+  PieChart,
+  UserCog
+} from "lucide-react";
 import { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetHeader, SheetTitle, SheetContent } from "../ui/sheet";
@@ -20,25 +34,25 @@ export const peopleSidebarMenuItems = [
         id: "addperson",
         label: "Add Person",
         path: "/people/add",
-        icon: <Truck className="h-5 w-5" />
+        icon: <UserPlus className="h-5 w-5" /> 
     },
     {
         id: "groups&tags",
         label: "Groups & Tags",
         path: "/people/groups",
-        icon: <Tags className="h-5 w-5" />
+        icon: <Tag className="h-5 w-5" /> 
     },
     {
         id: "analytics",
         label: "Analytics",
         path: "/people/analytics",
-        icon: <BarChart className="h-5 w-5" />
+        icon: <PieChart className="h-5 w-5" /> 
     },
     {
         id: "credits",
         label: "Credits",
         path: "/people/credits",
-        icon: <BarChart className="h-5 w-5"/>
+        icon: <CreditCard className="h-5 w-5" />  
     },
     {
         id: "settings",
@@ -88,7 +102,7 @@ function PeopleSideBar({ open, setOpen }) {
                                 className="flex cursor-pointer items-center gap-2 text-xl font-bold"
                             >
                                 <ChartNoAxesCombined className="h-6 w-6" />
-                                <span>Admin Panel</span>
+                                <span>User Panel</span>
                             </SheetTitle>
                         </SheetHeader>
                         <div className="flex-1 overflow-y-auto p-4">
@@ -105,7 +119,7 @@ function PeopleSideBar({ open, setOpen }) {
                     className="flex cursor-pointer items-center gap-2 border-b p-6"
                 >
                     <ChartNoAxesCombined className="h-6 w-6" />
-                    <h1 className="text-xl font-bold">Admin Panel</h1>
+                    <h1 className="text-xl font-bold">User Panel</h1>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
                     <MenuItems />

@@ -150,6 +150,7 @@ function Credits() {
         </div>
 
         {/* Credits Display */}
+        {/*
         <div className="mb-10 text-center">
           <div className="inline-flex items-center gap-2 bg-muted px-4 py-2 rounded-full">
             <CreditCard className="w-4 h-4 text-muted-foreground" />
@@ -158,7 +159,7 @@ function Credits() {
             </span>
           </div>
         </div>
-
+        */}
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {creditPlans.map((plan) => {

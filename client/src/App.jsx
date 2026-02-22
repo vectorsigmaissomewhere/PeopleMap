@@ -12,6 +12,7 @@ import Analytics from "./pages/people-view/analytics";
 import Settings from "./pages/people-view/settings";
 import PersonDetails from "./pages/people-view/PersonDetails";
 import EditPerson from "./pages/people-view/EditPerson";
+import Credits from "./pages/people-view/credits";
 
 import PeopleLayout from "./components/people-view/layout";
 import ForgetPassword from "./pages/auth/forgetpassword";

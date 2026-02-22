@@ -17,9 +17,14 @@ axios.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+const getInitialTheme = () => {
+  const savedTheme = localStorage.getItem('theme');
+  return savedTheme || 'light';
+};
+
 const initialState = {
     isAuthenticated: false,
-    isLoading: true, // Start with true
+    isLoading: true, 
     user: null,
     isVerified: false,
     message: "",
@@ -27,6 +32,9 @@ const initialState = {
     error: null,
     accessToken: localStorage.getItem('accessToken') || null,
     refreshToken: localStorage.getItem('refreshToken') || null,
+    theme: getInitialTheme(), 
+    profileUpdateSuccess: false,
+    passwordChangeSuccess: false
 };
 
 export const registerUser = createAsyncThunk('/auth/register',
@@ -64,6 +72,49 @@ export const checkAuth = createAsyncThunk('/auth/checkauth',
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || { error: 'Network error' });
+        }
+    }
+);
+
+// Update profile
+export const updateProfile = createAsyncThunk(
+    'auth/updateProfile',
+    async (profileData, { rejectWithValue, getState }) => {
+        try {
+            const { auth } = getState();
+            const token = auth?.token?.access || localStorage.getItem('accessToken');
+            
+            const response = await axios.put('/api/user/profile/', profileData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || { msg: 'Failed to update profile' });
+        }
+    }
+);
+
+// Change password (when logged in)
+export const changePassword = createAsyncThunk(
+    'auth/changePassword',
+    async ({ password, password2 }, { rejectWithValue, getState }) => {
+        try {
+            const { auth } = getState();
+            const token = auth?.accessToken || localStorage.getItem('accessToken');
+            
+            const response = await axios.post('/api/user/changepassword/', {
+                password,
+                password2
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || { msg: 'Failed to change password' });
         }
     }
 );
@@ -116,6 +167,35 @@ export const verifyEmail = createAsyncThunk(
   }
 );
 
+// Forgot password (send reset email)
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await axios.post('/api/user/send-reset-password-email/', { email });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { msg: 'Failed to send reset email' });
+    }
+  }
+);
+
+// Reset password (with token)
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async ({ uid, token, password, password2 }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/api/user/reset-password/${uid}/${token}/`, {
+        password,
+        password2
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { msg: 'Failed to reset password' });
+    }
+  }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -138,10 +218,37 @@ const authSlice = createSlice({
             state.user = null;
             state.accessToken = null;
             state.refreshToken = null;
-            state.isLoading = false; // Ensure loading is set to false
+            state.isLoading = false; 
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             delete axios.defaults.headers.common['Authorization'];
+        },
+        setTheme: (state, action) => {
+            state.theme = action.payload;
+            localStorage.setItem('theme', action.payload);
+            if (action.payload === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        },
+        toggleTheme: (state) => {
+            state.theme = state.theme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', state.theme);
+            if (state.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        },
+        resetProfileUpdateSuccess: (state) => {
+            state.profileUpdateSuccess = false;
+        },
+        resetPasswordChangeSuccess: (state) => {
+            state.passwordChangeSuccess = false;
+        },
+        clearError: (state) => {
+            state.error = null;
         }
     },
     extraReducers: (builder) => {
@@ -229,8 +336,44 @@ const authSlice = createSlice({
         })
         .addCase(logoutUser.rejected, (state) => {
             state.isLoading = false;
+            state.user = null;
+            state.isAuthenticated = false;
+            state.accessToken = null;
+            state.refreshToken = null;
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            delete axios.defaults.headers.common['Authorization'];
         })
-        
+        .addCase(updateProfile.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+            state.profileUpdateSuccess = false;
+        })
+        .addCase(updateProfile.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.user = action.payload.user;
+            state.message = action.payload.msg;
+            state.profileUpdateSuccess = true;
+        })
+        .addCase(updateProfile.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload?.msg || 'Failed to update profile';
+            state.profileUpdateSuccess = false;
+        }).addCase(changePassword.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+            state.passwordChangeSuccess = false;
+        })
+        .addCase(changePassword.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.message = action.payload.msg;
+            state.passwordChangeSuccess = true;
+        })
+        .addCase(changePassword.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload?.msg || 'Failed to change password';
+            state.passwordChangeSuccess = false;
+        })
         .addCase(sendVerificationEmail.pending, (state) => {
             state.isLoading = true;
             state.error = null;
@@ -268,9 +411,33 @@ const authSlice = createSlice({
             state.isLoading = false;
             state.isVerified = false;
             state.error = action.payload || "Verification failed";
+        }).addCase(forgotPassword.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+        })
+        .addCase(forgotPassword.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.message = action.payload.msg;
+        })
+        .addCase(forgotPassword.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload?.msg || 'Failed to send reset email';
+        })
+        
+        .addCase(resetPassword.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+        })
+        .addCase(resetPassword.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.message = action.payload.msg;
+        })
+        .addCase(resetPassword.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload?.msg || 'Failed to reset password';
         });
     }
 });
 
-export const { setEmail, setLoading, resetVerificationState, logout } = authSlice.actions;
+export const { setEmail, setLoading, resetVerificationState, logout,setTheme,toggleTheme, resetProfileUpdateSuccess, resetPasswordChangeSuccess,clearError } = authSlice.actions;
 export default authSlice.reducer;

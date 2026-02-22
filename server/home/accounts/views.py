@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, UserChangePasswordSerializer, SendPasswordResetEmailSerializer, UserPasswordResetSerializer, VerifyEmailSerializer, ResendVerificationEmailSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, UserChangePasswordSerializer, SendPasswordResetEmailSerializer, UserPasswordResetSerializer, VerifyEmailSerializer, ResendVerificationEmailSerializer, UserUpdateSerializer
 from django.contrib.auth import authenticate
 from accounts.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken 
@@ -249,3 +249,33 @@ class LogoutView(APIView):
             return Response({"success": True})
         except Exception:
             return Response({"success": False}, status=400)
+        
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserRenderer]
+    
+    def get(self, request):
+        """Get current user profile"""
+        user = request.user
+        return Response({
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name
+            }
+        }, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        """Update user profile"""
+        serializer = UserUpdateSerializer(data=request.data, context={'user': request.user})
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.save()
+            return Response({
+                'msg': 'Profile updated successfully',
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'name': user.name
+                }
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

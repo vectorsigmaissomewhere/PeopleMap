@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from datetime import timedelta
 # from utils import Util
 
 # sending email 
@@ -203,5 +204,55 @@ class VerifyEmailSerializer(serializers.Serializer):
         user.is_active = True  # Activate the user
         user.verification_code = None  # Clear the verification code
         user.verification_code_expires = None
+        user.save()
+        return user
+    
+
+class UserUpdateSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    name = serializers.CharField(max_length=200, required=False)
+    
+    class Meta:
+        fields = ['email', 'name']
+    
+    def validate_email(self, value):
+        user = self.context.get('user')
+        
+        # Check if email is being changed
+        if value and value != user.email:
+            # Check if email already exists
+            if User.objects.filter(email=value).exclude(id=user.id).exists():
+                raise serializers.ValidationError("Email already exists")
+        return value
+    
+    def validate(self, attrs):
+        user = self.context.get('user')
+        return attrs
+    
+    def save(self, **kwargs):
+        user = self.context.get('user')
+        
+        if 'email' in self.validated_data and self.validated_data['email'] != user.email:
+            user.email = self.validated_data['email']
+            # If email changes, require re-verification
+            user.is_verified = False
+            # Generate new verification code
+            from django.utils import timezone
+            import random
+            import string
+            user.verification_code = ''.join(random.choices(string.digits, k=6))
+            user.verification_code_expires = timezone.now() + timedelta(hours=24)
+            
+            # Send verification email
+            from accounts.utils import Util
+            Util.send_verification_email(
+                user_email=user.email,
+                verification_code=user.verification_code,
+                user_name=user.name
+            )
+        
+        if 'name' in self.validated_data:
+            user.name = self.validated_data['name']
+        
         user.save()
         return user

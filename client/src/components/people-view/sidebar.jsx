@@ -35,6 +35,12 @@ export const peopleSidebarMenuItems = [
         icon: <BarChart className="h-5 w-5" />
     },
     {
+        id: "credits",
+        label: "Credits",
+        path: "/people/credits",
+        icon: <BarChart className="h-5 w-5"/>
+    },
+    {
         id: "settings",
         label: "Settings",
         path: "/people/settings", 

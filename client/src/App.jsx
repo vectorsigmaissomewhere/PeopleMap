@@ -107,6 +107,7 @@ function App() {
           <Route path="edit/:id" element={<EditPerson />} />
           <Route path="groups" element={<GroupsAndTags />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="credits" element={<Credits />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/unauth-page" element={<UnauthPage/>}/>

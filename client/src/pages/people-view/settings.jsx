@@ -157,6 +157,7 @@ function Settings() {
       <div className="container mx-auto px-4 max-w-3xl">
         {/* Header */}
         <div className="mb-8">
+            {/*
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
@@ -165,6 +166,7 @@ function Settings() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
+          */}
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Settings
           </h1>

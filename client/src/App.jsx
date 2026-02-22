@@ -13,6 +13,7 @@ import Settings from "./pages/people-view/settings";
 import PersonDetails from "./pages/people-view/PersonDetails";
 import EditPerson from "./pages/people-view/EditPerson";
 import Credits from "./pages/people-view/credits";
+import LandingPage from "./pages/people-view/landing-page";
 
 import PeopleLayout from "./components/people-view/layout";
 import ForgetPassword from "./pages/auth/forgetpassword";
@@ -26,6 +27,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { checkAuth, setLoading } from "./store/auth-slice";
 import axios from 'axios';
+
 
 
 
@@ -78,6 +80,7 @@ function App() {
   return (
     <div className="flex flex-col overflow-hidden bg-white">
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route
           path="/"
           element={

@@ -31,12 +31,12 @@ function Credits() {
       icon: Zap,
       color: "blue",
       popular: false,
-      features: [
-        "1,000 credits",
-        "Basic contact management",
-        "Tag organization",
-        "Email support"
-      ]
+      //features: [
+      //  "1,000 credits",
+      //  "Basic contact management",
+      //  "Tag organization",
+      //  "Email support"
+      //]
     },
     {
       id: "pro",
@@ -46,12 +46,12 @@ function Credits() {
       icon: Rocket,
       color: "purple",
       popular: true,
-      features: [
-        "2,000 credits",
-        "Advanced analytics",
-        "Priority support",
-        "Bulk import/export"
-      ]
+      //features: [
+      //  "2,000 credits",
+      //  "Advanced analytics",
+      //  "Priority support",
+      //  "Bulk import/export"
+      //]
     },
     {
       id: "unlimited",
@@ -61,12 +61,13 @@ function Credits() {
       icon: Infinity,
       color: "amber",
       popular: false,
-      features: [
-        "Unlimited credits",
-        "All Pro features",
-        "API access",
-        "Dedicated support"
-      ]
+      
+      //features: [
+      //  "Unlimited credits",
+      //  "All Pro features",
+      //  "API access",
+      //  "Dedicated support"
+      //]
     }
   ];
 
@@ -85,7 +86,7 @@ function Credits() {
     // Simulate payment processing
     setTimeout(() => {
       const plan = creditPlans.find(p => p.id === selectedPlan);
-      toast.success(`Successfully purchased ${plan.name} plan!`);
+      toast.success(`Purchasing this ${plan.name} plan is not available and yet to come!`);
       setIsProcessing(false);
       setSelectedPlan(null);
     }, 2000);
@@ -202,7 +203,7 @@ function Credits() {
                     </p>
                   </div>
                 </CardHeader>
-
+                {/*
                 <CardContent className="pt-6">
                   <ul className="space-y-3">
                     {plan.features.map((feature, index) => (
@@ -213,7 +214,7 @@ function Credits() {
                     ))}
                   </ul>
                 </CardContent>
-
+                */}
                 <CardFooter>
                   <Button
                     onClick={() => handlePlanSelect(plan.id)}

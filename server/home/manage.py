@@ -3,7 +3,7 @@ import sys
 
 def main():
     # This line is crucial - it should point to the nested settings
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'home.home.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'home.settings')
 
     # Add paths (your existing path code)
     current_dir = os.path.dirname(os.path.abspath(__file__))

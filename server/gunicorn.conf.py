@@ -1,22 +1,30 @@
+# server/gunicorn.conf.py
 import sys
 import os
 
-# Get the server directory
+print("=" * 50)
+print("GUNICORN CONFIG LOADED")
+print("=" * 50)
+
+# Get paths
 server_dir = os.path.dirname(os.path.abspath(__file__))
+home_dir = os.path.join(server_dir, 'home')
+nested_home = os.path.join(home_dir, 'home')
 
 # Add paths to Python path
-if server_dir not in sys.path:
-    sys.path.insert(0, server_dir)
+for path in [nested_home, home_dir, server_dir]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+        print(f"✅ Added {path} to Python path")
 
-# Add the nested home path
-nested_home = os.path.join(server_dir, 'home', 'home')
-if os.path.exists(nested_home) and nested_home not in sys.path:
-    sys.path.insert(0, nested_home)
+# CRITICAL: Set the Django settings module
+os.environ['DJANGO_SETTINGS_MODULE'] = 'home.home.settings'
+print(f"✅ Set DJANGO_SETTINGS_MODULE to {os.environ['DJANGO_SETTINGS_MODULE']}")
 
-# Set the WSGI app to the nested location
+print(f"Python path: {sys.path}")
+
+# Set the WSGI app
 wsgi_app = "home.home.wsgi:application"
 
-# Optional: Add logging to see what's happening
-print(f"Server directory: {server_dir}")
-print(f"Nested home: {nested_home}")
-print(f"Python path: {sys.path}")
+print(f"wsgi_app set to: {wsgi_app}")
+print("=" * 50)

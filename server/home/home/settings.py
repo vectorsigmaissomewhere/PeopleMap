@@ -138,16 +138,37 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# Static files configuration
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
+# CORS settings - Add your Duck DNS domains
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://peoplehub.duckdns.org",
+    "http://peoplemap.duckdns.org",
+    "https://peoplehub.duckdns.org",  
+    "https://peoplemap.duckdns.org",  
+]
+
+# If your frontend uses different ports or protocols
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://\w+\.duckdns\.org$",
+    r"^https://\w+\.duckdns\.org$",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF settings for Duck DNS domains
+CSRF_TRUSTED_ORIGINS = [
+    "http://peoplehub.duckdns.org",
+    "http://peoplemap.duckdns.org",
+    "https://peoplehub.duckdns.org",
+    "https://peoplemap.duckdns.org",
+]
 
 # Add REST Framework settings
 REST_FRAMEWORK = {

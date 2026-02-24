@@ -1,9 +1,22 @@
 from pathlib import Path
 from datetime import timedelta 
 import os 
+import sys
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Add the parent directories to path so Python can find your apps
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Points to server/
+
+# Add the nested home to path
+nested_home = os.path.join(BASE_DIR, 'home', 'home')
+if nested_home not in sys.path:
+    sys.path.insert(0, nested_home)
+
+# Add the home directory to path
+home_dir = os.path.join(BASE_DIR, 'home')
+if home_dir not in sys.path:
+    sys.path.insert(0, home_dir)
 
 
 # Quick-start development settings - unsuitable for production

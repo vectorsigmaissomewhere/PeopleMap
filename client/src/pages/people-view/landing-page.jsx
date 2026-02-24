@@ -81,7 +81,7 @@ const LandingPage = () => {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <Users className="h-4 w-4 text-primary-foreground" />
               </div>
-              <Link to="/"><span className="font-display text-lg font-bold">ContactsHub</span></Link>
+              <Link to="/"><span className="font-display text-lg font-bold">PeopleMap</span></Link>
             </div>
             <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
               <a href="#features" className="hover:text-foreground transition-colors">Features</a>
@@ -410,10 +410,10 @@ const LandingPage = () => {
               <div className="h-7 w-7 rounded-md bg-primary flex items-center justify-center">
                 <Users className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold">ContactsHub</span>
+              <span className="font-display font-bold">PeopleMap</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} ContactsHub. All rights reserved.
+              © {new Date().getFullYear()} PeopleMap. All rights reserved.
             </p>
           </div>
         </footer>

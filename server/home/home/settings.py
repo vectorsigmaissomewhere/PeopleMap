@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'accounts',
     'people',
     'cloudinary',
-    'cloudinary_storage'
+    'cloudinary_storage',
+    'anymail',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -185,13 +186,37 @@ SIMPLE_JWT = {
 }
 
 
-
+# this is for google apps smtp 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'anishbro501625@gmail.com'
-EMAIL_HOST_PASSWORD = 'pdad csms oywv zcge'
+EMAIL_HOST_USER = 'mappeople82@gmail.com'
+EMAIL_HOST_PASSWORD = 'dfad ecot zjin cjkr'
 EMAIL_USE_TLS = True
+
+
+# this is for mailtrap 
+"""
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = 'your_mailtrap_user_id'
+EMAIL_HOST_PASSWORD = 'your_mailtrap_password'
+EMAIL_PORT = '2525'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+"""
+
+# this is for brevo
+"""
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+ANYMAIL = {
+    "BREVO_API_KEY": "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",
+}
+DEFAULT_FROM_EMAIL = 'a32334001@smtp-brevo.com'
+DEFAULT_FROM_EMAIL = 'a32334001@smtp-brevo.com'
+EMAIL_HOST_USER = DEFAULT_FROM_EMAIL 
+"""
+
 
 # Add Cloudinary settings
 CLOUDINARY_CLOUD_NAME = 'dszkdvueo'

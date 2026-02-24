@@ -1,7 +1,18 @@
-import { Menu } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
+import { useDispatch } from 'react-redux';
+import { logout } from "@/store/auth-slice";
+import { useNavigate } from 'react-router-dom';
 
 function PeopleHeader({ setOpenSidebar }) {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate('/auth/login');
+    };
+
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
             {/* Hamburger menu icon - visible only on mobile */}
@@ -19,9 +30,17 @@ function PeopleHeader({ setOpenSidebar }) {
                 <h1 className="text-lg font-semibold md:text-xl">People Management</h1>
             </div>
             
-            {/* You can add other header items here like user profile, notifications, etc. */}
+            {/* Add logout button here */}
             <div className="flex items-center gap-4">
-                {/* Add your user profile, notifications, etc. here */}
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    className="text-muted-foreground hover:text-foreground"
+                >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                </Button>
             </div>
         </header>
     );

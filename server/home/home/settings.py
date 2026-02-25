@@ -45,14 +45,14 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'accounts.apps.AccountsConfig',
     'people.apps.PeopleConfig',
-    #'accounts',
-    #'people',
+    'accounts',
+    'people',
     'cloudinary',
     'cloudinary_storage',
     'anymail',
 ]
 
-AUTH_USER_MODEL = 'accounts.apps.AccountsConfig.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

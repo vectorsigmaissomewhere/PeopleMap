@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',  
     'rest_framework_simplejwt',
+    'accounts.apps.myAppNameConfig',
+    'people.apps.myAppNameConfig',
     'accounts',
     'people',
     'cloudinary',

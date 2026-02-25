@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+
 def ping(request):
     return JsonResponse({"status": "ok", "message": "API base is working"})
 

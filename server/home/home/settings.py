@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'anymail',
 ]
 
-AUTH_USER_MODEL = 'home.accounts.models.User'
+AUTH_USER_MODEL = 'home.accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

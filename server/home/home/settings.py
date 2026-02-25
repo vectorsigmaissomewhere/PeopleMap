@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-u@3gg5dt3p%kt0p)5t0et=^kvqz!%%xr5ywpbwsx)&l_sgk5*%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -58,6 +58,7 @@ AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -116,7 +117,6 @@ DATABASES = {
         },
         # CRITICAL FOR NEON:
         'CONN_MAX_AGE': 0, 
-        'CONN_HEALTH_CHECKS': True,
     }
 }
 

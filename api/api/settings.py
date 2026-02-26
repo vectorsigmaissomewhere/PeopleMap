@@ -110,7 +110,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://peoplemap.duckdns.org",
     "https://*.onrender.com",  # Allow Render domains
 ]
-
+# made some changes redeploy
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 

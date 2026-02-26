@@ -54,3 +54,9 @@ my-fastapi-project/
 ├── .gitignore
 ├── Dockerfile                      # optional but recommended for prod
 └── docker-compose.yml              # local dev with postgres + app
+
+
+
+```text 
+Make little changes
+```

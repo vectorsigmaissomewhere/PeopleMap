@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-b&1zt=(^bi7pl8g^hmk%396s@l5@d=wz%0g@)1hn6nn__$4m(v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -83,6 +83,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api.wsgi.application'
 
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://peoplehub.duckdns.org",
+    "http://peoplemap.duckdns.org",
+    "https://peoplehub.duckdns.org",
+    "https://peoplemap.duckdns.org",
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https?://\w+\.duckdns\.org$",
+    r"^https?://.*\.onrender\.com$",  
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://peoplehub.duckdns.org",
+    "http://peoplemap.duckdns.org",
+    "https://peoplehub.duckdns.org",
+    "https://peoplemap.duckdns.org",
+    "https://*.onrender.com",  # Allow Render domains
+]
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

@@ -30,13 +30,10 @@ export const fetchPeople = createAsyncThunk(
     'people/fetchPeople',
     async ({ userId, page = 1, pageSize = 10, search = '', tag = '', company = '', city = '' }, { rejectWithValue, getState }) => {
         try {
-            console.log("This is the fetch people api");
             const { auth } = getState();
-            console.log(auth);
             const token = auth?.token?.access || localStorage.getItem('accessToken');
             
             let url = `/api/people/people/user/${userId}/?page=${page}&page_size=${pageSize}`;
-            console.log(url);
             if (search) url += `&search=${encodeURIComponent(search)}`;
             if (tag) url += `&tag=${encodeURIComponent(tag)}`;
             if (company) url += `&company=${encodeURIComponent(company)}`;
@@ -47,7 +44,6 @@ export const fetchPeople = createAsyncThunk(
                     'Authorization': `Bearer ${token}`
                 }
             });
-            console.log(response.data);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || { msg: 'Failed to fetch people' });
@@ -112,7 +108,6 @@ export const fetchPersonById = createAsyncThunk(
                     'Authorization': `Bearer ${token}`
                 }
             });
-            console.log(response.data);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || { msg: 'Failed to fetch person' });

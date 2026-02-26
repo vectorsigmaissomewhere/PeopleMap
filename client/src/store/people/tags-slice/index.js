@@ -17,8 +17,6 @@ export const fetchTags = createAsyncThunk(
     async (userId, { rejectWithValue }) => {
         try {
             const response = await axios.get(`/api/people/tags/user/${userId}/`);
-            console.log("this is it");
-            console.log(response.data);
             
             return response.data;
         } catch (error) {

@@ -40,7 +40,6 @@ const initialState = {
 export const registerUser = createAsyncThunk('/auth/register',
     async (formData) => {
         const response = await axios.post('/api/user/register/', formData);
-        console.log(response.data);
         return { data: response.data, formData };
     }
 );
@@ -145,7 +144,6 @@ export const verifyEmail = createAsyncThunk(
   "email/verifyEmail",
   async (formData, { rejectWithValue }) => {
     try {
-        console.log('Sending verification with data:', formData);
         
         const response = await axios.post(
           "/api/user/verify-email/",
@@ -158,10 +156,8 @@ export const verifyEmail = createAsyncThunk(
           }
         );
         
-        console.log('Verification response:', response);
         return response.data;
     } catch (error) {
-      console.error('Verification error:', error.response || error);
       return rejectWithValue(error.response?.data || { msg: "Verification failed" });
     }
   }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchDashboardStats } from "@/store/people/dashboard-slice";
+import { checkCredits } from "@/store/people/people-slice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ function Dashboard() {
 
   useEffect(() => {
     if (user?.id) {
+      dispatch(checkCredits());
       dispatch(fetchDashboardStats());
     }
   }, [user?.id, dispatch]);
